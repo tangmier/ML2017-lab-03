@@ -3,8 +3,38 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from ensemble import *
 from sklearn import tree
+from PIL import Image
+from feature import *
+import os
+
+original_data_directory = "./datasets/original/"
+
+face = 'face'
+nonface = 'nonface'
+
+def extract(type):
+    original_data_path = original_data_directory + type
+    count = 0
+    for filename in os.listdir(original_data_path):
+        #images are converted into a size of 24 * 24 grayscale
+        img = Image.open(original_data_path + "/" + filename).convert('L')
+        img = img.resize((24, 24))
+        img = np.array(img)
+
+        #extract NPD features
+        features = []
+        feature = NPDFeature(img).extract()
+        features.append(feature)
+
+        count = count + 1
+        print(count)
+    np.save("./datasets/"+type+"_features.npy", features)
 
 if __name__ == "__main__":
+    # extract feature
+    extract(face)
+    extract(nonface)
+
     face_features = np.load("./datasets/face_features.npy")
     nonface_features = np.load("./datasets/nonface_features.npy")
 
@@ -35,5 +65,9 @@ if __name__ == "__main__":
 
     Y_pred = classifier.predict(X_validation)
     target_names = ['face', 'non face']
-    print(classification_report(y_validation, Y_pred, target_names=target_names, digits=4))
+    report = classification_report(y_validation, Y_pred, target_names=target_names, digits=4)
+    with open("./report.txt", 'w') as f:
+        f.write(report)
+    print(report)
+
 
